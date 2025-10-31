@@ -37,7 +37,7 @@
 
         header { 
             background-color: var(--abril-green); /* CABEÇALHO VERDE */
-            padding: 15px 0; /* Menos padding */
+            padding: 15px 0; 
             text-align: center; 
             margin-bottom: 30px; 
             box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1); 
@@ -49,14 +49,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 15px; /* Espaço entre a logo e o título */
+            gap: 15px; 
         }
-        .header-logo-white { /* Logo da árvore branca no cabeçalho */
+        .header-logo-white { 
             height: 45px;
-            filter: brightness(0) invert(1); /* Mantido, caso precise inverter para branco puro */
+            filter: brightness(0) invert(1); 
         }
         h1 { 
-            color: white; /* TEXTO BRANCO DENTRO DO HEADER VERDE */
+            color: white; 
             margin: 0; 
             font-size: 2.0em; 
             font-weight: 300; 
@@ -92,7 +92,7 @@
             display: flex; 
             align-items: center;
         }
-        .section-title-logo-green { /* Logo da árvore verde nos títulos de seção */
+        .section-title-logo-green { 
             height: 25px; 
             margin-left: 10px; 
         }
@@ -199,10 +199,10 @@
             gap: 8px; 
         }
 
-        .button-icon-white { /* Ícone da árvore branca nos botões */
+        .button-icon-white { 
             height: 20px; 
             vertical-align: middle;
-            filter: brightness(0) invert(1); /* Mantido, caso precise inverter para branco puro */
+            filter: brightness(0) invert(1); 
         }
 
         .btn-add-line { 
@@ -434,17 +434,32 @@
             formMessage.className = `message-box ${type}`;
             formMessage.innerHTML = message;
         }
+        
+        // ✅ CORREÇÃO 2: Função para ordenar "MM/AAAA"
+        function sortCompetencia(a, b) {
+            const [mesA, anoA] = a.split('/').map(Number);
+            const [mesB, anoB] = b.split('/').map(Number);
+            const dataA = new Date(anoA, mesA - 1); // Mês é 0-indexado
+            const dataB = new Date(anoB, mesB - 1);
+            return dataA - dataB;
+        }
 
-        // Popula o select e aplica o Tom Select
-        function populateSelect(selectElement, options, initialText = 'Selecione') {
+        // ✅ CORREÇÃO 2: 'skipSort' foi adicionado
+        function populateSelect(selectElement, options, initialText = 'Selecione', skipSort = false) {
             const id = selectElement.id;
             if (tomSelectInstances[id]) {
                 tomSelectInstances[id].destroy();
                 delete tomSelectInstances[id];
             }
             
+            let uniqueOptions = [...new Set(options.filter(Boolean))];
+            
+            // Só ordena alfabeticamente se skipSort for false
+            if (!skipSort) {
+                uniqueOptions.sort();
+            }
+            
             selectElement.innerHTML = `<option value="" disabled selected>${initialText}</option>`;
-            const uniqueOptions = [...new Set(options.filter(Boolean))].sort();
             uniqueOptions.forEach(option => {
                 const opt = document.createElement('option');
                 opt.value = option;
@@ -465,11 +480,10 @@
             }
         }
         
-        // CORREÇÃO: Função auxiliar para adicionar listeners ao Tom Select
         function addTomSelectChangeListener(selectId, handler) {
             const tsInstance = tomSelectInstances[selectId];
             if (tsInstance) {
-                tsInstance.off('change'); // Remove listeners antigos para evitar duplicação
+                tsInstance.off('change'); 
                 tsInstance.on('change', handler);
             }
         }
@@ -505,19 +519,16 @@
 
             div.querySelector('.btn-remove-line').addEventListener('click', removeFunction);
 
-            // Popula Nível 1 e inicializa Tom Select
             const nivel1Select = div.querySelector('select[name="nivel1"]');
             const nivel1Options = [...new Set(cascadingOptionsData.map(row => row[0]))];
             populateSelect(nivel1Select, nivel1Options, 'Selecione Nível 1');
 
-            // Inicializa os outros selects (vazios) com Tom Select
             populateSelect(div.querySelector('select[name="nivel2"]'), [], 'Selecione N1');
             populateSelect(div.querySelector('select[name="nivel3"]'), [], 'Selecione N2');
             populateSelect(div.querySelector('select[name="nivel4"]'), [], 'Selecione N3');
             populateSelect(div.querySelector('select[name="nivel5"]'), [], 'Selecione N4');
             populateSelect(div.querySelector('select[name="centro"]'), [], 'Selecione N2');
 
-            // CORREÇÃO: Adiciona Event Listeners na instância do Tom Select
             addTomSelectChangeListener(`nivel1-${lineId}`, () => updateCascadingSelects(lineId, 1));
             
             addTomSelectChangeListener(`nivel2-${lineId}`, () => {
@@ -532,7 +543,6 @@
         function updateCascadingSelects(lineId, currentLevel) {
             const nextLevel = currentLevel + 1;
             
-            // Reseta do próximo nível em diante
             for (let i = nextLevel; i <= 5; i++) {
                 const selectToReset = document.getElementById(`nivel${i}-${lineId}`);
                 if (selectToReset) {
@@ -540,7 +550,6 @@
                     selectToReset.disabled = true;
                 }
             }
-            // Reseta Centro se Nível 1 ou 2 for alterado
              if (currentLevel <= 2) {
                 const centroSelect = document.getElementById(`centro-${lineId}`);
                  if (centroSelect) {
@@ -555,7 +564,6 @@
             for (let i = 1; i <= currentLevel; i++) {
                 const selectElement = document.getElementById(`nivel${i}-${lineId}`);
                 const tsInstance = tomSelectInstances[selectElement.id];
-                // Certifica-se de que estamos pegando o valor da instância Tom Select
                 selectedChain.push(tsInstance ? tsInstance.getValue() : selectElement.value); 
             }
             
@@ -574,11 +582,10 @@
                 populateSelect(nextSelect, nextOptions, `Selecione Nível ${nextLevel}`);
                 nextSelect.disabled = nextOptions.length === 0;
                 
-                // CORREÇÃO: Re-adiciona o listener do próximo nível
-                 if (nextLevel <= 4) { // Nível 4 é o último a ter cascata para o Nível 5
+                 if (nextLevel <= 4) { 
                      addTomSelectChangeListener(`nivel${nextLevel}-${lineId}`, () => updateCascadingSelects(lineId, nextLevel));
                  }
-                 if (nextLevel === 2) { // Garante que o listener do Nível 2 para Centro seja reativado
+                 if (nextLevel === 2) { 
                      addTomSelectChangeListener(`nivel2-${lineId}`, () => {
                          updateCascadingSelects(lineId, 2);
                          filterCentroForRow(lineId);
@@ -605,8 +612,12 @@
             }
         }
 
-        async function loadOptionsAndFixedLists() {
-            loadingOverlay.style.display = 'flex';
+        // ✅ CORREÇÃO 1: Adicionado parâmetro isReload
+        async function loadOptionsAndFixedLists(isReload = false) {
+            if (!isReload) {
+                loadingOverlay.style.display = 'flex';
+            }
+            
             try {
                 const response = await fetch(`${APPS_SCRIPT_URL}?action=get_options`);
                 if (!response.ok) { 
@@ -622,21 +633,35 @@
                     
                     const competenciaSelect = document.getElementById('competencia');
                     if (competenciaSelect && fixedLists.competenciaList) {
-                        populateSelect(competenciaSelect, fixedLists.competenciaList, 'Selecione a Competência');
+                        
+                        // ✅ CORREÇÃO 2: Ordena a lista de competência
+                        fixedLists.competenciaList.sort(sortCompetencia); 
+                        
+                        // ✅ CORREÇÃO 2: Passa 'true' para pular a re-ordenação alfabética
+                        populateSelect(competenciaSelect, fixedLists.competenciaList, 'Selecione a Competência', true); 
                         competenciaSelect.disabled = false;
                     }
                     
-                    if (rateioContainer.children.length === 0) {
+                    if (rateioContainer.children.length === 0 && !isReload) {
                         createRateioLine();
                     }
                 } else {
-                    showMessage('error', `Erro ao carregar opções (Verifique Logs do Apps Script): ${data.error}`);
+                    // Só mostra erro se não for um recarregamento
+                    if (!isReload) {
+                        showMessage('error', `Erro ao carregar opções (Verifique Logs do Apps Script): ${data.error}`);
+                    }
                 }
             } catch (error) {
                 console.error("Erro detalhado em loadOptionsAndFixedLists:", error);
-                showMessage('error', `Falha na conexão inicial. Verifique se a APPS_SCRIPT_URL está atualizada e se o Deploy permite "Qualquer pessoa".`);
+                // Só mostra erro se não for um recarregamento
+                if (!isReload) {
+                    showMessage('error', `Falha na conexão inicial. Verifique se a APPS_SCRIPT_URL está atualizada e se o Deploy permite "Qualquer pessoa".`);
+                }
             } finally {
-                loadingOverlay.style.display = 'none';
+                // Só esconde o overlay se não for um recarregamento (pois no recarregamento ele nem é mostrado)
+                if (!isReload) {
+                    loadingOverlay.style.display = 'none';
+                }
             }
         }
 
@@ -661,6 +686,7 @@
         submissionForm.addEventListener("submit", async function(event) {
             event.preventDefault(); 
             const submitButton = submissionForm.querySelector('button.btn-submit');
+            const originalButtonText = submitButton.innerHTML; // Salva o HTML original do botão
 
             const rateioLines = document.querySelectorAll('#rateio-container .rateio-item');
             const isRateioPresent = rateioLines.length > 0;
@@ -689,8 +715,19 @@
             
             try {
                 const response = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: formData });
-                if (!response.ok) throw new Error('Erro de rede ou servidor.');
-                const responseData = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(`Erro do servidor (Status ${response.status}).`);
+                }
+                
+                let responseData;
+                try {
+                    responseData = await response.json();
+                } catch (e) {
+                    const textResponse = await response.text();
+                    console.error("Erro ao tentar ler JSON. Resposta do Apps Script:", textResponse);
+                    throw new Error(`Falha no formato da resposta. O Apps Script retornou HTML/Texto. Conteúdo: ${textResponse.substring(0, 50)}...`);
+                }
 
                 if (responseData && responseData.result === "success") {
                     showMessage('success', `✅ Sucesso! Pedido registrado. ID: <strong>#${responseData.id}</strong>.`);
@@ -700,22 +737,19 @@
                     tomSelectInstances = {};
                     rateioContainer.innerHTML = ''; 
                     
-                    const compSelect = document.getElementById('competencia');
-                    if (compSelect) {
-                        populateSelect(compSelect, data.fixedLists.competenciaList, 'Selecione a Competência'); // Recarrega a Competência
-                        compSelect.disabled = false;
-                    }
-
-                    createRateioLine();
+                    // ✅ CORREÇÃO 1: Chama o recarregamento com a flag 'isReload = true'
+                    // Isso evita que a mensagem de sucesso seja sobrescrita por um erro de recarga.
+                    loadOptionsAndFixedLists(true); 
+                    
                 } else {
-                    throw new Error(responseData.error || "Resposta inesperada.");
+                    throw new Error(responseData.error || `Resposta de erro do servidor Apps Script: ${JSON.stringify(responseData)}`);
                 }
             } catch (error) {
                 console.error("Erro de envio:", error);
-                showMessage('error', `Ops! Houve um erro no envio.`);
+                showMessage('error', `❌ **Falha de Comunicação:** ${error.message}. O pedido pode ter sido enviado, mas a confirmação falhou. Verifique a planilha.`);
             } finally {
                 submitButton.disabled = false;
-                submitButton.textContent = 'Enviar Pedido de Reclassificação';
+                submitButton.innerHTML = originalButtonText; // Restaura o HTML original (com ícones)
             }
         });
 
@@ -731,6 +765,8 @@
 
         async function handleSearch() {
             const query = searchQueryInput.value.trim();
+            const originalButtonText = btnSearch.innerHTML; // Salva HTML original
+            
             if (query.length < 3) {
                 searchResultsDiv.innerHTML = '<p class="error message-box">Digite pelo menos 3 caracteres.</p>';
                 return;
@@ -753,7 +789,7 @@
                 showMessage('error', `Falha na conexão ao buscar dados. Verifique o console (F12).`);
             } finally {
                 btnSearch.disabled = false;
-                btnSearch.textContent = 'Buscar Pedidos';
+                btnSearch.innerHTML = originalButtonText; // Restaura HTML original
             }
         }
         
