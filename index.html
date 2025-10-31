@@ -37,7 +37,7 @@
 
         header { 
             background-color: var(--abril-green); /* CABEÇALHO VERDE */
-            padding: 15px 0; /* Menos padding */
+            padding: 15px 0; 
             text-align: center; 
             margin-bottom: 30px; 
             box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1); 
@@ -49,14 +49,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 15px; /* Espaço entre a logo e o título */
+            gap: 15px; 
         }
-        .header-logo-white { /* Logo da árvore branca no cabeçalho */
+        .header-logo-white { 
             height: 45px;
-            filter: brightness(0) invert(1); /* Mantido, caso precise inverter para branco puro */
+            filter: brightness(0) invert(1); 
         }
         h1 { 
-            color: white; /* TEXTO BRANCO DENTRO DO HEADER VERDE */
+            color: white; 
             margin: 0; 
             font-size: 2.0em; 
             font-weight: 300; 
@@ -92,7 +92,7 @@
             display: flex; 
             align-items: center;
         }
-        .section-title-logo-green { /* Logo da árvore verde nos títulos de seção */
+        .section-title-logo-green { 
             height: 25px; 
             margin-left: 10px; 
         }
@@ -199,10 +199,10 @@
             gap: 8px; 
         }
 
-        .button-icon-white { /* Ícone da árvore branca nos botões */
+        .button-icon-white { 
             height: 20px; 
             vertical-align: middle;
-            filter: brightness(0) invert(1); /* Mantido, caso precise inverter para branco puro */
+            filter: brightness(0) invert(1); 
         }
 
         .btn-add-line { 
@@ -434,6 +434,15 @@
             formMessage.className = `message-box ${type}`;
             formMessage.innerHTML = message;
         }
+        
+        // ✅ CORREÇÃO 2: Função para ordenar "MM/AAAA"
+        function sortCompetencia(a, b) {
+            const [mesA, anoA] = a.split('/').map(Number);
+            const [mesB, anoB] = b.split('/').map(Number);
+            const dataA = new Date(anoA, mesA - 1); // Mês é 0-indexado
+            const dataB = new Date(anoB, mesB - 1);
+            return dataA - dataB;
+        }
 
         // Popula o select e aplica o Tom Select
         function populateSelect(selectElement, options, initialText = 'Selecione') {
@@ -443,8 +452,10 @@
                 delete tomSelectInstances[id];
             }
             
-            selectElement.innerHTML = `<option value="" disabled selected>${initialText}</option>`;
+            // A ordenação padrão (alfabética) é mantida aqui
             const uniqueOptions = [...new Set(options.filter(Boolean))].sort();
+            
+            selectElement.innerHTML = `<option value="" disabled selected>${initialText}</option>`;
             uniqueOptions.forEach(option => {
                 const opt = document.createElement('option');
                 opt.value = option;
@@ -465,11 +476,11 @@
             }
         }
         
-        // CORREÇÃO: Função auxiliar para adicionar listeners ao Tom Select
+        // Função auxiliar para adicionar listeners ao Tom Select
         function addTomSelectChangeListener(selectId, handler) {
             const tsInstance = tomSelectInstances[selectId];
             if (tsInstance) {
-                tsInstance.off('change'); // Remove listeners antigos para evitar duplicação
+                tsInstance.off('change'); 
                 tsInstance.on('change', handler);
             }
         }
@@ -517,7 +528,7 @@
             populateSelect(div.querySelector('select[name="nivel5"]'), [], 'Selecione N4');
             populateSelect(div.querySelector('select[name="centro"]'), [], 'Selecione N2');
 
-            // CORREÇÃO: Adiciona Event Listeners na instância do Tom Select
+            // Adiciona Event Listeners na instância do Tom Select
             addTomSelectChangeListener(`nivel1-${lineId}`, () => updateCascadingSelects(lineId, 1));
             
             addTomSelectChangeListener(`nivel2-${lineId}`, () => {
@@ -532,7 +543,6 @@
         function updateCascadingSelects(lineId, currentLevel) {
             const nextLevel = currentLevel + 1;
             
-            // Reseta do próximo nível em diante
             for (let i = nextLevel; i <= 5; i++) {
                 const selectToReset = document.getElementById(`nivel${i}-${lineId}`);
                 if (selectToReset) {
@@ -540,7 +550,6 @@
                     selectToReset.disabled = true;
                 }
             }
-            // Reseta Centro se Nível 1 ou 2 for alterado
              if (currentLevel <= 2) {
                 const centroSelect = document.getElementById(`centro-${lineId}`);
                  if (centroSelect) {
@@ -555,7 +564,6 @@
             for (let i = 1; i <= currentLevel; i++) {
                 const selectElement = document.getElementById(`nivel${i}-${lineId}`);
                 const tsInstance = tomSelectInstances[selectElement.id];
-                // Certifica-se de que estamos pegando o valor da instância Tom Select
                 selectedChain.push(tsInstance ? tsInstance.getValue() : selectElement.value); 
             }
             
@@ -574,11 +582,10 @@
                 populateSelect(nextSelect, nextOptions, `Selecione Nível ${nextLevel}`);
                 nextSelect.disabled = nextOptions.length === 0;
                 
-                // CORREÇÃO: Re-adiciona o listener do próximo nível
-                 if (nextLevel <= 4) { // Nível 4 é o último a ter cascata para o Nível 5
+                 if (nextLevel <= 4) { 
                      addTomSelectChangeListener(`nivel${nextLevel}-${lineId}`, () => updateCascadingSelects(lineId, nextLevel));
                  }
-                 if (nextLevel === 2) { // Garante que o listener do Nível 2 para Centro seja reativado
+                 if (nextLevel === 2) { 
                      addTomSelectChangeListener(`nivel2-${lineId}`, () => {
                          updateCascadingSelects(lineId, 2);
                          filterCentroForRow(lineId);
@@ -622,6 +629,10 @@
                     
                     const competenciaSelect = document.getElementById('competencia');
                     if (competenciaSelect && fixedLists.competenciaList) {
+                        
+                        // ✅ CORREÇÃO 2: Ordena a lista de competência antes de popular
+                        fixedLists.competenciaList.sort(sortCompetencia); 
+                        
                         populateSelect(competenciaSelect, fixedLists.competenciaList, 'Selecione a Competência');
                         competenciaSelect.disabled = false;
                     }
@@ -689,8 +700,19 @@
             
             try {
                 const response = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: formData });
-                if (!response.ok) throw new Error('Erro de rede ou servidor.');
-                const responseData = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(`Erro do servidor (Status ${response.status}).`);
+                }
+                
+                let responseData;
+                try {
+                    responseData = await response.json();
+                } catch (e) {
+                    const textResponse = await response.text();
+                    console.error("Erro ao tentar ler JSON. Resposta do Apps Script:", textResponse);
+                    throw new Error(`Falha no formato da resposta. O Apps Script retornou HTML/Texto. Conteúdo: ${textResponse.substring(0, 50)}...`);
+                }
 
                 if (responseData && responseData.result === "success") {
                     showMessage('success', `✅ Sucesso! Pedido registrado. ID: <strong>#${responseData.id}</strong>.`);
@@ -700,22 +722,25 @@
                     tomSelectInstances = {};
                     rateioContainer.innerHTML = ''; 
                     
-                    const compSelect = document.getElementById('competencia');
-                    if (compSelect) {
-                        populateSelect(compSelect, data.fixedLists.competenciaList, 'Selecione a Competência'); // Recarrega a Competência
-                        compSelect.disabled = false;
-                    }
-
-                    createRateioLine();
+                    // ✅ CORREÇÃO 1: Não 'await'. Apenas chama o recarregamento.
+                    // Isso mostra a msg de sucesso imediatamente e previne que
+                    // um erro de recarga sobreponha a msg de sucesso.
+                    loadOptionsAndFixedLists(); 
+                    
                 } else {
-                    throw new Error(responseData.error || "Resposta inesperada.");
+                    throw new Error(responseData.error || `Resposta de erro do servidor Apps Script: ${JSON.stringify(responseData)}`);
                 }
             } catch (error) {
                 console.error("Erro de envio:", error);
-                showMessage('error', `Ops! Houve um erro no envio.`);
+                showMessage('error', `❌ **Falha de Comunicação:** ${error.message}. O pedido pode ter sido enviado, mas a confirmação falhou. Verifique a planilha.`);
             } finally {
                 submitButton.disabled = false;
-                submitButton.textContent = 'Enviar Pedido de Reclassificação';
+                // Restaura o texto original do botão (com as árvores)
+                submitButton.innerHTML = `
+                    <img src="https://lh3.googleusercontent.com/rd-d/ALs6j_HvciQwqli0eJBkxj916j4FAPmt_gBsPdNJvXntsmHxGX-auipSkhmR2N-TAWNnWlRn7mMcutPEJ9TPfcrLptcbQvYaFTtWg_yPBRTYRfJC6DUwDTk_ouY1h2ozUlUbDDh_hCT0Oo0ADhnrfqDwxO5-Yv8CnefaTqvO31ZnlQk3nZb0yHH56wBbO55ZUpkfVASHM6JK4GSN7Q01DYq-cd6AW5vFDCN4zvyhNh7F_E2nlY1EtI-y4aBXj0MoUDhx8qQ5XRSAaadiUHSW4EoFqNImvSuEi33ATvg00S-Ril3FVd8-v-sfLdd5y_YpxMQ79rmYGHWF-T7GTNe0u5nywwhAv77ec8GEgUEfSuWoGX0enNqqSC26YmM_Mg4oRtPlPwTjPDS2cPqpvpmq7ibArhgXmrb-zEVUmmOAJb33kJJLNgurWWsxI_hP34nHobPAzgkQgFdM9OERNqO-nv-Y5x6h-Mhp4eLKCRsAdJwwVoqQ8qZHsray1M6JJf-wdFacdOxUb_YABfzKnfulZpauGlGlGZfHXHvlGj896jblzfHIsnMGsj79jE7X7SawZRoyVK7ycfy9nahqxaWizSuZWcWM4SNkQTBaka55A4RwQLGFFoQnasC3AoXg4JBUkvXHYPTeWyI_eRE90nyyRh-h_DhC9oJrJl_ylitTAXvr3TOMQpOWpoBTYPslAH5u2k0N-9FtRijUSazroMaN--UfVl0f91yhqQbhpwWk3QuYKfSczGollaRQN2vZVMN2jU58LjWaSdS3v-Idr3zI_mfy0GFQr70yVmyG6iz4SD9eHJMqwZTWJSoClExRKNVtKAStK7FsubllPy1SOMVorJHWkcpPrf-hWVJClMubw4g91ddgJQRRH1Ax0NOtkgFyvzUbGulND41Y2VzjmRakIhDOwjQLnLX2EA12P5D_QdZEL6VyLP6FeE5qRW4_RVHyubKCea-b2D8HLeyApDtADACc4jpgNu9aphrsvaXyEKKNYkimiKyKHjNj_x7g4wy4s64CLVPZ=s1600" alt="Enviar" class="button-icon-white">
+                    Enviar Pedido de Reclassificação
+                    <img src="https://lh3.googleusercontent.com/rd-d/ALs6j_HvciQwqli0eJBkxj916j4FAPmt_gBsPdNJvXntsmHxGX-auipSkhmR2N-TAWNnWlRn7mMcutPEJ9TPfcrLptcbQvYaFTtWg_yPBRTYRfJC6DUwDTk_ouY1h2ozUlUbDDh_hCT0Oo0ADhnrfqDwxO5-Yv8CnefaTqvO31ZnlQk3nZb0yHH56wBbO55ZUpkfVASHM6JK4GSN7Q01DYq-cd6AW5vFDCN4zvyhNh7F_E2nlY1EtI-y4aBXj0MoUDhx8qQ5XRSAaadiUHSW4EoFqNImvSuEi33ATvg00S-Ril3FVd8-v-sfLdd5y_YpxMQ79rmYGHWF-T7GTNe0u5nywwhAv77ec8GEgUEfSuWoGX0enNqqSC26YmM_Mg4oRtPlPwTjPDS2cPqpvpmq7ibArhgXmrb-zEVUmmOAJb33kJJLNgurWWsxI_hP34nHobPAzgkQgFdM9OERNqO-nv-Y5x6h-Mhp4eLKCRsAdJwwVoqQ8qZHsray1M6JJf-wdFacdOxUb_YABfzKnfulZpauGlGlGZfHXHvlGj896jblzfHIsnMGsj79jE7X7SawZRoyVK7ycfy9nahqxaWizSuZWcWM4SNkQTBaka55A4RwQLGFFoQnasC3AoXg4JBUkvXHYPTeWyI_eRE90nyyRh-h_DhC9oJrJl_ylitTAXvr3TOMQpOWpoBTYPslAH5u2k0N-9FtRijUSazroMaN--UfVl0f91yhqQbhpwWk3QuYKfSczGollaRQN2vZVMN2jU58LjWaSdS3v-Idr3zI_mfy0GFQr70yVmyG6iz4SD9eHJMqwZTWJSoClExRKNVtKAStK7FsubllPy1SOMVorJHWkcpPrf-hWVJClMubw4g91ddgJQRRH1Ax0NOtkgFyvzUbGulND41Y2VzjmRakIhDOwjQLnLX2EA12P5D_QdZEL6VyLP6FeE5qRW4_RVHyubKCea-b2D8HLeyApDtADACc4jpgNu9aphrsvaXyEKKNYkimiKyKHjNj_x7g4wy4s64CLVPZ=s1600" alt="Enviar" class="button-icon-white">
+                `;
             }
         });
 
@@ -753,7 +778,11 @@
                 showMessage('error', `Falha na conexão ao buscar dados. Verifique o console (F12).`);
             } finally {
                 btnSearch.disabled = false;
-                btnSearch.textContent = 'Buscar Pedidos';
+                // Restaura o texto original do botão (com a árvore)
+                btnSearch.innerHTML = `
+                    <img src="https://lh3.googleusercontent.com/rd-d/ALs6j_HvciQwqli0eJBkxj916j4FAPmt_gBsPdNJvXntsmHxGX-auipSkhmR2N-TAWNnWlRn7mMcutPEJ9TPfcrLptcbQvYaFTtWg_yPBRTYRfJC6DUwDTk_ouY1h2ozUlUbDDh_hCT0Oo0ADhnrfqDwxO5-Yv8CnefaTqvO31ZnlQk3nZb0yHH56wBbO55ZUpkfVASHM6JK4GSN7Q01DYq-cd6AW5vFDCN4zvyhNh7F_E2nlY1EtI-y4aBXj0MoUDhx8qQ5XRSAaadiUHSW4EoFqNImvSuEi33ATvg00S-Ril3FVd8-v-sfLdd5y_YpxMQ79rmYGHWF-T7GTNe0u5nywwhAv77ec8GEgUEfSuWoGX0enNqqSC26YmM_Mg4oRtPlPwTjPDS2cPqpvpmq7ibArhgXmrb-zEVUmmOAJb33kJJLNgurWWsxI_hP34nHobPAzgkQgFdM9OERNqO-nv-Y5x6h-Mhp4eLKCRsAdJwwVoqQ8qZHsray1M6JJf-wdFacdOxUb_YABfzKnfulZpauGlGlGZfHXHvlGj896jblzfHIsnMGsj79jE7X7SawZRoyVK7ycfy9nahqxaWizSuZWcWM4SNkQTBaka55A4RwQLGFFoQnasC3AoXg4JBUkvXHYPTeWyI_eRE90nyyRh-h_DhC9oJrJl_ylitTAXvr3TOMQpOWpoBTYPslAH5u2k0N-9FtRijUSazroMaN--UfVl0f91yhqQbhpwWk3QuYKfSczGollaRQN2vZVMN2jU58LjWaSdS3v-Idr3zI_mfy0GFQr70yVmyG6iz4SD9eHJMqwZTWJSoClExRKNVtKAStK7FsubllPy1SOMVorJHWkcpPrf-hWVJClMubw4g91ddgJQRRH1Ax0NOtkgFyvzUbGulND41Y2VzjmRakIhDOwjQLnLX2EA12P5D_QdZEL6VyLP6FeE5qRW4_RVHyubKCea-b2D8HLeyApDtADACc4jpgNu9aphrsvaXyEKKNYkimiKyKHjNj_x7g4wy4s64CLVPZ=s1600" alt="Buscar" class="button-icon-white">
+                    Buscar Pedidos
+                `;
             }
         }
         
