@@ -53,7 +53,7 @@
         }
         .header-logo-white { /* Logo da árvore branca no cabeçalho */
             height: 45px;
-            filter: brightness(0) invert(1); /* Mantido, caso precise inverter para branco puro */
+            filter: brightness(0) invert(1); 
         }
         h1 { 
             color: white; /* TEXTO BRANCO DENTRO DO HEADER VERDE */
@@ -202,7 +202,7 @@
         .button-icon-white { /* Ícone da árvore branca nos botões */
             height: 20px; 
             vertical-align: middle;
-            filter: brightness(0) invert(1); /* Mantido, caso precise inverter para branco puro */
+            filter: brightness(0) invert(1); 
         }
 
         .btn-add-line { 
@@ -416,7 +416,7 @@
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 
     <script>
-        // !! SUBSTITUA PELA SUA URL DE DEPLOY MAIS RECENTE !!
+        // !! MANTENHA A SUA URL DE DEPLOY CORRETA AQUI !!
         const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyeNkxzkyzISud0c307W8qcoxy_FC2SWezvXqjk43zknOduqpBKVV7lleNLV9Dqdi0D/exec'; 
         
         const submissionForm = document.getElementById("submission-form");
@@ -465,7 +465,7 @@
             }
         }
         
-        // CORREÇÃO: Função auxiliar para adicionar listeners ao Tom Select
+        // Função auxiliar para adicionar listeners ao Tom Select
         function addTomSelectChangeListener(selectId, handler) {
             const tsInstance = tomSelectInstances[selectId];
             if (tsInstance) {
@@ -517,7 +517,7 @@
             populateSelect(div.querySelector('select[name="nivel5"]'), [], 'Selecione N4');
             populateSelect(div.querySelector('select[name="centro"]'), [], 'Selecione N2');
 
-            // CORREÇÃO: Adiciona Event Listeners na instância do Tom Select
+            // Adiciona Event Listeners na instância do Tom Select
             addTomSelectChangeListener(`nivel1-${lineId}`, () => updateCascadingSelects(lineId, 1));
             
             addTomSelectChangeListener(`nivel2-${lineId}`, () => {
@@ -555,7 +555,6 @@
             for (let i = 1; i <= currentLevel; i++) {
                 const selectElement = document.getElementById(`nivel${i}-${lineId}`);
                 const tsInstance = tomSelectInstances[selectElement.id];
-                // Certifica-se de que estamos pegando o valor da instância Tom Select
                 selectedChain.push(tsInstance ? tsInstance.getValue() : selectElement.value); 
             }
             
@@ -574,11 +573,10 @@
                 populateSelect(nextSelect, nextOptions, `Selecione Nível ${nextLevel}`);
                 nextSelect.disabled = nextOptions.length === 0;
                 
-                // CORREÇÃO: Re-adiciona o listener do próximo nível
-                 if (nextLevel <= 4) { // Nível 4 é o último a ter cascata para o Nível 5
+                 if (nextLevel <= 4) { 
                      addTomSelectChangeListener(`nivel${nextLevel}-${lineId}`, () => updateCascadingSelects(lineId, nextLevel));
                  }
-                 if (nextLevel === 2) { // Garante que o listener do Nível 2 para Centro seja reativado
+                 if (nextLevel === 2) { 
                      addTomSelectChangeListener(`nivel2-${lineId}`, () => {
                          updateCascadingSelects(lineId, 2);
                          filterCentroForRow(lineId);
@@ -689,30 +687,41 @@
             
             try {
                 const response = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: formData });
-                if (!response.ok) throw new Error('Erro de rede ou servidor.');
-                const responseData = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(`Erro do servidor (Status ${response.status}).`);
+                }
+                
+                // Tenta ler a resposta como JSON
+                let responseData;
+                try {
+                    responseData = await response.json();
+                } catch (e) {
+                    // Se a resposta não for JSON (e.g., um HTML de sucesso)
+                    const textResponse = await response.text();
+                    console.error("Erro ao tentar ler JSON. Resposta do Apps Script:", textResponse);
+                    throw new Error(`Falha no formato da resposta. O Apps Script retornou HTML/Texto. Conteúdo: ${textResponse.substring(0, 50)}...`);
+                }
 
                 if (responseData && responseData.result === "success") {
                     showMessage('success', `✅ Sucesso! Pedido registrado. ID: <strong>#${responseData.id}</strong>.`);
                     submissionForm.reset(); 
                     
+                    // Limpeza dos Tom Selects após sucesso
                     Object.values(tomSelectInstances).forEach(ts => ts.destroy());
                     tomSelectInstances = {};
                     rateioContainer.innerHTML = ''; 
                     
-                    const compSelect = document.getElementById('competencia');
-                    if (compSelect) {
-                        populateSelect(compSelect, data.fixedLists.competenciaList, 'Selecione a Competência'); // Recarrega a Competência
-                        compSelect.disabled = false;
-                    }
-
-                    createRateioLine();
+                    // Recarrega as opções necessárias
+                    await loadOptionsAndFixedLists(); 
+                    
                 } else {
-                    throw new Error(responseData.error || "Resposta inesperada.");
+                    throw new Error(responseData.error || `Resposta de erro do servidor Apps Script: ${JSON.stringify(responseData)}`);
                 }
             } catch (error) {
                 console.error("Erro de envio:", error);
-                showMessage('error', `Ops! Houve um erro no envio.`);
+                // MENSAGEM CLARA DE FALHA DE COMUNICAÇÃO
+                showMessage('error', `❌ **Falha de Comunicação:** ${error.message}. O pedido pode ter sido enviado, mas a confirmação falhou. Verifique a planilha.`);
             } finally {
                 submitButton.disabled = false;
                 submitButton.textContent = 'Enviar Pedido de Reclassificação';
